@@ -17,6 +17,9 @@ parse_image = reqparse.RequestParser()
 parse_image.add_argument('file', type=werkzeug.datastructures.FileStorage, location='files')
 
 class GAIAPort(Resource):
+    def get(self, req_id):
+        return "Hola :D"
+
     def put(self, req_id):
         print(req_id)
 
@@ -41,4 +44,4 @@ api.add_resource(GAIAPort, "/<int:req_id>")
 
 if __name__ == "__main__":
     ee.Initialize()
-    app.run(port=5000, debug=True)
+    app.run(port=5000, debug=False)
