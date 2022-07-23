@@ -1,38 +1,44 @@
 from flask import Flask
+from flask import request as flaskreq
 from flask_restful import Api, Resource, reqparse
+import requests
 import werkzeug
-import matplotlib.pyplot as plt
-from PIL import Image
-from io import BytesIO, StringIO
 
-UPLOAD_FOLDER = 'src/test_uploads'
-ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
+import ee
+
+from Modules.GAIa.constants import CARBON_RATE as GAIA_CARBON_RATE
+import Modules.GAIa.calc as GAIa
+
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 api = Api(app)
 
 parse_image = reqparse.RequestParser()
 parse_image.add_argument('file', type=werkzeug.datastructures.FileStorage, location='files')
 
-class HelloWorld(Resource):
-    def get(self):
-        return "Hello World"
+class GAIAPort(Resource):
+    def put(self, req_id):
+        print(req_id)
 
-    def post(self):
-        args = parse_image.parse_args()
-        image_file = args['file']
+        current_geoJS = flaskreq.json
+        poligon_coordinates = current_geoJS['features'][0]['geometry']['coordinates']
 
-        print(image_file)
+        print(poligon_coordinates)
+        loaded_polygon = ee.Geometry.Polygon(poligon_coordinates,None,False)
 
-        raw_img = BytesIO(image_file.stream.read())
+        scan_results = GAIa.calc_approx(loaded_polygon)
 
-        test_img = plt.imread(raw_img)
-        print(test_img.shape)
+        dollar_res = requests.get('https://v6.exchangerate-api.com/v6/5e3481394f866fbf4bf07bac/latest/USD')
+        now_mxn_rate = (dollar_res.json())['conversion_rates']['MXN']
 
-        return 200
+        nasdaq_current_equiv = scan_results['carbon_calc']*now_mxn_rate*GAIA_CARBON_RATE
 
-api.add_resource(HelloWorld, "/")
+        scan_results.update({'nasdaq_current_equiv' : nasdaq_current_equiv})
+
+        return scan_results
+
+api.add_resource(GAIAPort, "/<int:req_id>")
 
 if __name__ == "__main__":
+    ee.Initialize()
     app.run(port=5000, debug=True)
