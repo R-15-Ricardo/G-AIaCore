@@ -9,6 +9,7 @@ import ee
 from Modules.GAIa.constants import CARBON_RATE as GAIA_CARBON_RATE
 import Modules.GAIa.calc as GAIa
 
+#hola
 
 app = Flask(__name__)
 api = Api(app)
