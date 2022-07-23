@@ -43,5 +43,5 @@ class GAIAPort(Resource):
 api.add_resource(GAIAPort, "/<int:req_id>")
 
 if __name__ == "__main__":
-    ee.Initialize()
+    #ee.Initialize()
     app.run(port=5000, debug=False)
